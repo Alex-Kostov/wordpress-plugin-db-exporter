@@ -26,18 +26,44 @@ Text Domain:
  
 */
 
+//@TODO
+//  Save file in the correct local directory
+
+//  Generate Name
+//  Save in proper Directory
+//  register CRON
+//  Connect to google API - https://developers.google.com/drive/api/v3/quickstart/php
+//  Upload the data.
+//  Delete local copy
+//  Optimize the code and check for future errors
+//  Fix coding standards
+//  Fill plugin details
+//  Sanitize
+
+
 //ENTER THE RELEVANT INFO BELOW
 $mysqlUserName      = "root";
 $mysqlPassword      = "password";
 $mysqlHostName      = "localhost";
 $DbName             = "wordpress_aaxmedia";
-$backup_name        = "mybackup.sql";
-// $tables             = "Your tables";
-$tables = array("wp_commentmeta",'wp_comments','wp_options');
 
-//or add 5th parameter(array) of specific tables:    array("mytable1","mytable2","mytable3") for multiple tables
+$tables = [];
+$site_name = strtolower( get_bloginfo() );
+$backup_name = $site_name . '-db-export-' . date('mdYhis', time()) . '.sql';
 
-Export_Database($mysqlHostName,$mysqlUserName,$mysqlPassword,$DbName,  $tables=false, $backup_name=false );
+
+// Get All the tables.
+global $wpdb;
+$mytables=$wpdb->get_results("SHOW TABLES");
+foreach ($mytables as $mytable)
+{
+    foreach ($mytable as $t)
+    {
+		array_push($tables, $t);
+    }
+}
+
+Export_Database($mysqlHostName,$mysqlUserName,$mysqlPassword,$DbName,  $tables, $backup_name );
 
 function Export_Database($host,$user,$pass,$name,  $tables=false, $backup_name=false )
 {
@@ -103,12 +129,17 @@ function Export_Database($host,$user,$pass,$name,  $tables=false, $backup_name=f
 		} $content .="\n\n\n";
 	}
 	//$backup_name = $backup_name ? $backup_name : $name."___(".date('H-i-s')."_".date('d-m-Y').")__rand".rand(1,11111111).".sql";
-	$backup_name = $backup_name ? $backup_name : $name.".sql";
+	// $backup_name = $backup_name ? $backup_name : $name.".sql";
 	// header('Content-Type: application/octet-stream');
 	// header("Content-Transfer-Encoding: Binary");
 	// header("Content-disposition: attachment; filename=\"".$backup_name."\"");
 	// echo $content;
-	$fp = fopen('test.sql', 'w');
+
+	$dir = WP_PLUGIN_DIR . '/db-exporter';
+
+
+	$fp = fopen($dir . '/' . $backup_name, 'w');
 	fwrite($fp, $content);
 	fclose($fp);
+	// die();
 }
